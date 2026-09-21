@@ -1,243 +1,234 @@
-# Teste Prático - Iniflex
+# Teste Prático — Iniflex
 
-Projeto desenvolvido em **Java** como parte do teste técnico da **Iniflex**.
+Projeto desenvolvido em **Java 17** como solução para o teste prático de programação da Iniflex.
 
-O objetivo é implementar uma aplicação simples para cadastro e manipulação de funcionários, utilizando recursos fundamentais da linguagem Java e boas práticas de organização de código.
+A aplicação cadastra uma lista de funcionários e executa operações de remoção, reajuste salarial, agrupamento, filtragem, ordenação e cálculos. A solução utiliza somente Java Core nas regras de negócio, com Maven para construção do projeto e JUnit 5 para testes.
 
-## Objetivo
+## Requisitos atendidos
 
-A aplicação parte de uma lista de funcionários contendo:
+| Item | Implementação |
+|---|---|
+| 1 | Classe `Pessoa` com nome e data de nascimento |
+| 2 | Classe `Funcionario` herdando de `Pessoa`, com salário e função |
+| 3.1 | Cadastro dos funcionários na ordem apresentada no enunciado |
+| 3.2 | Remoção do funcionário João |
+| 3.3 | Impressão de todos os dados com formatação brasileira |
+| 3.4 | Reajuste salarial de 10% |
+| 3.5 | Agrupamento dos funcionários por função em um `Map` |
+| 3.6 | Impressão dos funcionários agrupados por função |
+| 3.8 | Filtro dos aniversariantes dos meses 10 e 12 |
+| 3.9 | Identificação do funcionário com maior idade |
+| 3.10 | Ordenação alfabética dos funcionários |
+| 3.11 | Cálculo do total dos salários |
+| 3.12 | Cálculo da quantidade de salários mínimos por funcionário |
 
-- nome;
-- data de nascimento;
-- salário;
-- função.
-
-A partir desses dados, o programa executa operações de remoção, atualização salarial, agrupamento, filtragem, ordenação e cálculos.
+> O enunciado original passa diretamente do item 3.6 para o 3.8 e não apresenta um requisito 3.7.
 
 ## Estrutura do projeto
 
-A solução foi organizada a partir de três classes principais:
-
 ```text
-src/
-└── main/
-    └── java/
-        └── br/
-            └── com/
-                └── iniflex/
-                    ├── Principal.java
-                    └── model/
-                        ├── Pessoa.java
-                        └── Funcionario.java
+teste-pratico-iniflex/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── src/
+│   ├── main/
+│   │   └── java/
+│   │       └── br/com/iniflex/
+│   │           ├── Principal.java
+│   │           ├── model/
+│   │           │   ├── Pessoa.java
+│   │           │   └── Funcionario.java
+│   │           └── service/
+│   │               └── FuncionarioService.java
+│   └── test/
+│       └── java/
+│           └── br/com/iniflex/
+│               ├── PrincipalTest.java
+│               └── model/
+│                   └── ModelValidationTest.java
+├── .gitignore
+├── pom.xml
+└── README.md
 ```
 
-### Pessoa
+## Arquitetura
 
-A classe `Pessoa` representa os dados básicos de uma pessoa.
+A aplicação foi organizada em três responsabilidades principais.
 
-Atributos:
+### Model
 
-```java
-String nome;
-LocalDate dataNascimento;
-```
+As classes `Pessoa` e `Funcionario` representam as entidades do domínio.
 
-Foi utilizado `LocalDate` porque a data de nascimento não necessita de informações de horário ou fuso.
+`Pessoa` possui:
 
-### Funcionario
+- `String nome`;
+- `LocalDate dataNascimento`.
 
-A classe `Funcionario` estende `Pessoa` e adiciona os dados específicos do funcionário:
+`Funcionario` estende `Pessoa` e adiciona:
 
-```java
-BigDecimal salario;
-String funcao;
-```
+- `BigDecimal salario`;
+- `String funcao`.
 
-O salário é representado por `BigDecimal`, evitando problemas de precisão comuns em cálculos monetários feitos com `float` ou `double`.
+### Service
 
-Exemplo:
+A classe `FuncionarioService` concentra as regras de negócio:
+
+- remoção por nome;
+- reajuste salarial;
+- agrupamento por função;
+- filtro de aniversariantes;
+- identificação do funcionário mais velho;
+- cálculo da idade;
+- ordenação alfabética;
+- soma dos salários;
+- cálculo em salários mínimos.
+
+### Aplicação
+
+A classe `Principal`:
+
+- cria os dados definidos pelo enunciado;
+- coordena a sequência de execução;
+- delega as regras ao serviço;
+- formata e apresenta os resultados no console.
+
+## Decisões técnicas
+
+### BigDecimal para valores monetários
+
+Salários e cálculos financeiros utilizam `BigDecimal`, evitando as imprecisões de representação encontradas em `float` e `double`.
+
+Os valores são construídos a partir de texto:
 
 ```java
 new BigDecimal("2009.44");
 ```
 
-### Principal
+O reajuste salarial utiliza arredondamento explícito para duas casas decimais com `RoundingMode.HALF_UP`.
 
-A classe `Principal` contém o método `main` e é responsável por executar os requisitos solicitados no teste.
+### LocalDate para datas
 
-## Funcionalidades
+As datas de nascimento utilizam `LocalDate`, pois não precisam armazenar horário ou fuso. A idade é calculada com `Period.between`.
 
-### 1. Cadastro dos funcionários
+### Collections e Streams
 
-Os funcionários são armazenados em uma:
+A solução utiliza:
 
-```java
-List<Funcionario>
-```
+- `ArrayList` para armazenar os funcionários;
+- `Map<String, List<Funcionario>>` para agrupamento por função;
+- `filter` para aniversariantes;
+- `sorted` e `Comparator` para ordenação;
+- `map` e `reduce` para soma dos salários;
+- `Collectors.groupingBy` para formação dos grupos.
 
-utilizando uma implementação com:
+### Formatação brasileira
 
-```java
-ArrayList<>
-```
-
-Os registros são inseridos na mesma ordem apresentada no enunciado.
-
-### 2. Remoção do funcionário João
-
-A remoção é realizada por meio de `removeIf`:
-
-```java
-funcionarios.removeIf(
-    funcionario -> funcionario.getNome().equals("João")
-);
-```
-
-### 3. Impressão dos funcionários
-
-Todos os funcionários são exibidos com:
-
-- nome;
-- data de nascimento;
-- salário;
-- função.
-
-As datas são formatadas no padrão brasileiro:
+As datas são apresentadas no padrão:
 
 ```text
 dd/MM/yyyy
 ```
 
-Para isso é utilizado `DateTimeFormatter`.
-
-Os valores numéricos também são exibidos no padrão brasileiro, com ponto como separador de milhar e vírgula como separador decimal, utilizando `NumberFormat`.
-
-Exemplo:
+Os valores numéricos utilizam a localidade `pt-BR`, com ponto para milhares e vírgula para decimais:
 
 ```text
 19.119,88
 ```
 
-### 4. Aumento salarial de 10%
+## Validações de domínio
 
-Todos os funcionários recebem um reajuste de 10%.
+As entidades evitam a criação de estados inválidos:
 
-O cálculo é realizado com `BigDecimal`:
+- nome não pode ser nulo ou vazio;
+- função não pode ser nula ou vazia;
+- espaços excedentes de nome e função são removidos;
+- data de nascimento não pode ser nula ou futura;
+- salário não pode ser nulo ou negativo;
+- atualizações de salário passam pelas mesmas validações do cadastro.
 
-```java
-funcionario.getSalario()
-    .multiply(new BigDecimal("1.10"));
+O salário igual a zero é aceito, pois não representa um valor inválido para o tipo monetário.
+
+## Testes automatizados
+
+O projeto utiliza **JUnit 5** e possui testes para:
+
+- cadastro e ordem original dos funcionários;
+- remoção de João;
+- reajuste salarial e arredondamento;
+- agrupamento por função;
+- aniversariantes de outubro e dezembro;
+- funcionário mais velho;
+- cálculo de idade;
+- ordenação alfabética;
+- total dos salários;
+- quantidade de salários mínimos;
+- atributos nulos;
+- textos vazios;
+- normalização de espaços;
+- data de nascimento futura;
+- salário negativo;
+- validação durante a atualização do salário.
+
+Para executar a suíte:
+
+```bash
+mvn clean test
 ```
 
-### 5. Agrupamento por função
+## Integração contínua
 
-Os funcionários são agrupados utilizando:
+O workflow `.github/workflows/ci.yml` utiliza GitHub Actions para executar:
 
-```java
-Map<String, List<Funcionario>>
+```bash
+mvn --batch-mode --update-snapshots verify
 ```
 
-A chave representa a função e o valor contém a lista de funcionários pertencentes àquela função.
+A validação automática utiliza Java 17 e é acionada em atualizações das branches `develop` e `main`, além de pull requests direcionados à `main`.
 
-O agrupamento é feito com Java Streams:
+## Requisitos para execução
 
-```java
-Collectors.groupingBy(Funcionario::getFuncao)
+- Java JDK 17 ou superior;
+- Apache Maven 3.9 ou compatível;
+- Git.
+
+Verifique as instalações:
+
+```bash
+java -version
+mvn -version
+git --version
 ```
 
-### 6. Impressão dos funcionários agrupados por função
+## Como executar
 
-O `Map` gerado anteriormente é percorrido para exibir cada função junto aos respectivos funcionários.
+Clone o repositório:
 
-### 7. Aniversariantes dos meses 10 e 12
-
-A lista é filtrada com base no mês da data de nascimento:
-
-```java
-funcionario.getDataNascimento().getMonthValue()
+```bash
+git clone https://github.com/RafaelCirn3/teste-pratico-iniflex.git
 ```
 
-São selecionados os funcionários que fazem aniversário em outubro ou dezembro.
+Acesse o diretório:
 
-### 8. Funcionário com maior idade
-
-O funcionário mais velho é encontrado comparando as datas de nascimento:
-
-```java
-Comparator.comparing(Funcionario::getDataNascimento)
+```bash
+cd teste-pratico-iniflex
 ```
 
-A idade é calculada utilizando:
+Compile e execute os testes:
 
-```java
-Period.between(
-    funcionario.getDataNascimento(),
-    LocalDate.now()
-).getYears();
+```bash
+mvn clean test
 ```
 
-São exibidos o nome e a idade.
+Execute a aplicação:
 
-### 9. Ordenação alfabética
-
-A lista é ordenada pelo nome:
-
-```java
-Comparator.comparing(Funcionario::getNome)
+```bash
+mvn exec:java
 ```
 
-### 10. Total dos salários
+A saída será apresentada no terminal.
 
-O total dos salários é calculado utilizando `map` e `reduce`:
-
-```java
-funcionarios.stream()
-    .map(Funcionario::getSalario)
-    .reduce(BigDecimal.ZERO, BigDecimal::add);
-```
-
-### 11. Quantidade de salários mínimos
-
-Para cada funcionário é calculado quantos salários mínimos o salário representa.
-
-Foi considerado o valor definido no enunciado:
-
-```text
-R$ 1.212,00
-```
-
-O cálculo utiliza:
-
-```java
-BigDecimal.divide()
-```
-
-com:
-
-```java
-RoundingMode.HALF_UP
-```
-
-## Recursos do Java utilizados
-
-O projeto utiliza principalmente:
-
-- Programação Orientada a Objetos;
-- herança;
-- encapsulamento;
-- `List` e `ArrayList`;
-- `Map`;
-- Java Streams;
-- `Collectors.groupingBy`;
-- `Comparator`;
-- `BigDecimal`;
-- `LocalDate`;
-- `Period`;
-- `DateTimeFormatter`;
-- `NumberFormat`.
-
-## Fluxo de execução
+## Fluxo da aplicação
 
 ```text
 Cadastro dos funcionários
@@ -246,11 +237,9 @@ Remoção de João
         ↓
 Impressão dos dados
         ↓
-Aumento salarial de 10%
+Reajuste salarial de 10%
         ↓
-Agrupamento por função
-        ↓
-Impressão dos grupos
+Agrupamento e impressão por função
         ↓
 Filtro de aniversariantes
         ↓
@@ -263,115 +252,20 @@ Soma dos salários
 Cálculo em salários mínimos
 ```
 
-## Requisitos
-
-Para executar o projeto é necessário possuir:
-
-- Java JDK 17 ou superior;
-- Git;
-- uma IDE Java, opcionalmente.
-
-Para verificar a instalação do Java:
-
-```bash
-java -version
-javac -version
-```
-
-## Como executar
-
-Clone o repositório:
-
-```bash
-git clone https://github.com/RafaelCirn3/teste-pratico-iniflex.git
-```
-
-Entre no diretório do projeto:
-
-```bash
-cd teste-pratico-iniflex
-```
-
-Abra o projeto em uma IDE com suporte a Java, como:
-
-- IntelliJ IDEA;
-- Eclipse;
-- NetBeans;
-- Visual Studio Code.
-
-Em seguida, localize a classe:
-
-```text
-Principal.java
-```
-
-e execute o método:
-
-```java
-public static void main(String[] args)
-```
-
-A saída da aplicação será exibida no terminal ou console da IDE.
-
 ## Diferenciais do projeto
 
-Além de cumprir os requisitos funcionais propostos, o projeto foi pensado para demonstrar organização, segurança do domínio e facilidade de manutenção.
+Além do atendimento aos requisitos, foram adotadas decisões para melhorar a qualidade da solução:
 
-### Separação de responsabilidades
+- separação das regras de negócio em uma camada de serviço;
+- entidades responsáveis por proteger seus próprios dados;
+- métodos pequenos e testáveis;
+- testes funcionais e de validação;
+- construção reproduzível com Maven;
+- integração contínua com GitHub Actions;
+- histórico organizado com Conventional Commits;
+- uso apenas das tecnologias necessárias ao problema.
 
-As regras de negócio foram concentradas em uma camada de serviço, evitando que a classe `Principal` acumule cálculos, filtros e transformações. Dessa forma:
-
-- `Principal` coordena o fluxo da aplicação e apresenta os resultados;
-- `FuncionarioService` concentra reajustes, agrupamentos, filtros, ordenações e cálculos;
-- `Pessoa` e `Funcionario` representam e protegem os dados do domínio.
-
-### Validações de domínio
-
-As entidades validam seus próprios dados para impedir estados inválidos, incluindo:
-
-- nomes e funções nulos ou vazios;
-- remoção de espaços desnecessários;
-- datas de nascimento futuras;
-- salários nulos ou negativos;
-- validação do salário tanto no cadastro quanto na atualização.
-
-### Valores monetários seguros
-
-Todos os salários e cálculos financeiros utilizam `BigDecimal`, com arredondamento explícito quando necessário. Isso evita as imprecisões que podem ocorrer com `float` e `double`.
-
-### Código testável
-
-As operações foram divididas em métodos pequenos e independentes, permitindo testar cada regra isoladamente. A suíte com JUnit 5 cobre os requisitos funcionais e as validações das entidades.
-
-### Automação e reprodutibilidade
-
-O projeto utiliza Maven para gerenciamento da compilação, execução e testes. Também foi configurado um workflow do GitHub Actions para validar automaticamente o projeto a cada atualização relevante.
-
-### Simplicidade intencional
-
-Não foram adicionados frameworks, banco de dados ou infraestrutura que não fossem necessários para o problema. A proposta é demonstrar domínio de Java Core, orientação a objetos, Collections, Streams, datas e cálculos monetários por meio de uma solução simples, legível e extensível.
-
-## Decisões de implementação
-
-A solução foi mantida propositalmente simples e focada em **Java Core**.
-
-Não foram utilizados frameworks externos, banco de dados ou bibliotecas adicionais, pois o objetivo do teste é demonstrar domínio de:
-
-- orientação a objetos;
-- collections;
-- manipulação de datas;
-- operações monetárias;
-- Streams;
-- agrupamento;
-- filtragem;
-- ordenação;
-- redução de dados.
-
-Também foi priorizado o uso de tipos adequados ao domínio, como `BigDecimal` para valores monetários e `LocalDate` para datas de nascimento.
-
-## Observação sobre o enunciado
-
-O enunciado original pula diretamente do requisito **3.6** para o **3.8**. Por esse motivo, não há implementação correspondente a um requisito 3.7.
+A ausência de frameworks, banco de dados e containers é intencional. O objetivo é demonstrar domínio dos fundamentos solicitados por meio de uma solução simples, legível e de fácil execução.
 
 ## Autor
 
