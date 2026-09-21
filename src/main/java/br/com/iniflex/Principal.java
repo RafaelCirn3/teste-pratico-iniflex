@@ -1,22 +1,17 @@
 package br.com.iniflex;
 
 import br.com.iniflex.model.Funcionario;
+import br.com.iniflex.service.FuncionarioService;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class Principal {
 
@@ -25,6 +20,8 @@ public final class Principal {
     private static final DateTimeFormatter FORMATO_DATA =
             DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final Locale LOCALE_BRASIL = Locale.forLanguageTag("pt-BR");
+    private static final FuncionarioService FUNCIONARIO_SERVICE =
+            new FuncionarioService();
 
     private Principal() {
     }
@@ -32,15 +29,18 @@ public final class Principal {
     public static void main(String[] args) {
         List<Funcionario> funcionarios = criarFuncionarios();
 
-        removerFuncionarioPorNome(funcionarios, "João");
+        FUNCIONARIO_SERVICE.removerPorNome(funcionarios, "João");
 
         System.out.println("\n--- FUNCIONÁRIOS ---");
         funcionarios.forEach(Principal::imprimirFuncionario);
 
-        aplicarAumento(funcionarios, PERCENTUAL_AUMENTO);
+        FUNCIONARIO_SERVICE.aplicarAumento(
+                funcionarios,
+                PERCENTUAL_AUMENTO
+        );
 
         Map<String, List<Funcionario>> funcionariosPorFuncao =
-                agruparPorFuncao(funcionarios);
+                FUNCIONARIO_SERVICE.agruparPorFuncao(funcionarios);
 
         System.out.println("\n--- FUNCIONÁRIOS AGRUPADOS POR FUNÇÃO ---");
         funcionariosPorFuncao.forEach((funcao, lista) -> {
@@ -49,26 +49,33 @@ public final class Principal {
         });
 
         System.out.println("\n--- ANIVERSARIANTES DOS MESES 10 E 12 ---");
-        filtrarAniversariantes(funcionarios, Set.of(10, 12))
+        FUNCIONARIO_SERVICE
+                .filtrarAniversariantes(funcionarios, Set.of(10, 12))
                 .forEach(Principal::imprimirFuncionario);
 
-        funcionarioMaisVelho(funcionarios).ifPresent(funcionario -> {
-            int idade = calcularIdade(
-                    funcionario.getDataNascimento(),
-                    LocalDate.now()
-            );
+        FUNCIONARIO_SERVICE.encontrarMaisVelho(funcionarios)
+                .ifPresent(funcionario -> {
+                    int idade = FUNCIONARIO_SERVICE.calcularIdade(
+                            funcionario.getDataNascimento(),
+                            LocalDate.now()
+                    );
 
-            System.out.println("\n--- FUNCIONÁRIO COM MAIOR IDADE ---");
-            System.out.println("Nome: " + funcionario.getNome());
-            System.out.println("Idade: " + idade);
-        });
+                    System.out.println(
+                            "\n--- FUNCIONÁRIO COM MAIOR IDADE ---"
+                    );
+                    System.out.println("Nome: " + funcionario.getNome());
+                    System.out.println("Idade: " + idade);
+                });
 
         System.out.println("\n--- FUNCIONÁRIOS EM ORDEM ALFABÉTICA ---");
-        ordenarPorNome(funcionarios).forEach(Principal::imprimirFuncionario);
+        FUNCIONARIO_SERVICE.ordenarPorNome(funcionarios)
+                .forEach(Principal::imprimirFuncionario);
 
         System.out.println(
                 "\nTotal dos salários: R$ "
-                        + formatarNumero(somarSalarios(funcionarios))
+                        + formatarNumero(
+                                FUNCIONARIO_SERVICE.somarSalarios(funcionarios)
+                        )
         );
 
         System.out.println("\n--- SALÁRIOS MÍNIMOS POR FUNCIONÁRIO ---");
@@ -77,10 +84,11 @@ public final class Principal {
                         funcionario.getNome()
                                 + ": "
                                 + formatarNumero(
-                                        calcularSalariosMinimos(
-                                                funcionario.getSalario(),
-                                                SALARIO_MINIMO
-                                        )
+                                        FUNCIONARIO_SERVICE
+                                                .calcularSalariosMinimos(
+                                                        funcionario.getSalario(),
+                                                        SALARIO_MINIMO
+                                                )
                                 )
                                 + " salários mínimos"
                 )
@@ -112,91 +120,6 @@ public final class Principal {
                 "Helena", 1996, 9, 2, "2799.93", "Gerente"));
 
         return funcionarios;
-    }
-
-    public static void removerFuncionarioPorNome(
-            List<Funcionario> funcionarios,
-            String nome
-    ) {
-        funcionarios.removeIf(funcionario ->
-                funcionario.getNome().equals(nome));
-    }
-
-    public static void aplicarAumento(
-            List<Funcionario> funcionarios,
-            BigDecimal percentual
-    ) {
-        BigDecimal fator = BigDecimal.ONE.add(percentual);
-
-        funcionarios.forEach(funcionario ->
-                funcionario.setSalario(
-                        funcionario.getSalario()
-                                .multiply(fator)
-                                .setScale(2, RoundingMode.HALF_UP)
-                )
-        );
-    }
-
-    public static Map<String, List<Funcionario>> agruparPorFuncao(
-            List<Funcionario> funcionarios
-    ) {
-        return funcionarios.stream()
-                .collect(Collectors.groupingBy(
-                        Funcionario::getFuncao,
-                        LinkedHashMap::new,
-                        Collectors.toList()
-                ));
-    }
-
-    public static List<Funcionario> filtrarAniversariantes(
-            List<Funcionario> funcionarios,
-            Set<Integer> meses
-    ) {
-        return funcionarios.stream()
-                .filter(funcionario -> meses.contains(
-                        funcionario.getDataNascimento().getMonthValue()
-                ))
-                .toList();
-    }
-
-    public static Optional<Funcionario> funcionarioMaisVelho(
-            List<Funcionario> funcionarios
-    ) {
-        return funcionarios.stream()
-                .min(Comparator.comparing(Funcionario::getDataNascimento));
-    }
-
-    public static int calcularIdade(
-            LocalDate dataNascimento,
-            LocalDate dataReferencia
-    ) {
-        return Period.between(dataNascimento, dataReferencia).getYears();
-    }
-
-    public static List<Funcionario> ordenarPorNome(
-            List<Funcionario> funcionarios
-    ) {
-        return funcionarios.stream()
-                .sorted(Comparator.comparing(
-                        Funcionario::getNome,
-                        String.CASE_INSENSITIVE_ORDER
-                ))
-                .toList();
-    }
-
-    public static BigDecimal somarSalarios(
-            List<Funcionario> funcionarios
-    ) {
-        return funcionarios.stream()
-                .map(Funcionario::getSalario)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    public static BigDecimal calcularSalariosMinimos(
-            BigDecimal salario,
-            BigDecimal salarioMinimo
-    ) {
-        return salario.divide(salarioMinimo, 2, RoundingMode.HALF_UP);
     }
 
     private static Funcionario criarFuncionario(

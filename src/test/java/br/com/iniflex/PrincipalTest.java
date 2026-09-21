@@ -1,6 +1,8 @@
 package br.com.iniflex;
 
 import br.com.iniflex.model.Funcionario;
+import br.com.iniflex.service.FuncionarioService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -16,6 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PrincipalTest {
+
+    private FuncionarioService service;
+
+    @BeforeEach
+    void configurar() {
+        service = new FuncionarioService();
+    }
 
     @Test
     void deveCriarFuncionariosNaOrdemDoEnunciado() {
@@ -35,7 +44,7 @@ class PrincipalTest {
     void deveRemoverFuncionarioPeloNome() {
         List<Funcionario> funcionarios = Principal.criarFuncionarios();
 
-        Principal.removerFuncionarioPorNome(funcionarios, "João");
+        service.removerPorNome(funcionarios, "João");
 
         assertEquals(9, funcionarios.size());
         assertFalse(nomes(funcionarios).contains("João"));
@@ -44,24 +53,21 @@ class PrincipalTest {
     @Test
     void deveAplicarAumentoDeDezPorCentoComDuasCasasDecimais() {
         List<Funcionario> funcionarios = Principal.criarFuncionarios();
-        Principal.removerFuncionarioPorNome(funcionarios, "João");
+        service.removerPorNome(funcionarios, "João");
 
-        Principal.aplicarAumento(funcionarios, new BigDecimal("0.10"));
+        service.aplicarAumento(funcionarios, new BigDecimal("0.10"));
 
         assertEquals(new BigDecimal("2210.38"), funcionarios.get(0).getSalario());
-        assertEquals(
-                new BigDecimal("50906.82"),
-                Principal.somarSalarios(funcionarios)
-        );
+        assertEquals(new BigDecimal("50906.82"), service.somarSalarios(funcionarios));
     }
 
     @Test
     void deveAgruparFuncionariosPorFuncao() {
         List<Funcionario> funcionarios = Principal.criarFuncionarios();
-        Principal.removerFuncionarioPorNome(funcionarios, "João");
+        service.removerPorNome(funcionarios, "João");
 
         Map<String, List<Funcionario>> grupos =
-                Principal.agruparPorFuncao(funcionarios);
+                service.agruparPorFuncao(funcionarios);
 
         assertEquals(7, grupos.size());
         assertIterableEquals(
@@ -76,11 +82,9 @@ class PrincipalTest {
 
     @Test
     void deveFiltrarAniversariantesDeOutubroEDezembro() {
-        List<Funcionario> funcionarios = Principal.criarFuncionarios();
-
         List<Funcionario> aniversariantes =
-                Principal.filtrarAniversariantes(
-                        funcionarios,
+                service.filtrarAniversariantes(
+                        Principal.criarFuncionarios(),
                         Set.of(10, 12)
                 );
 
@@ -93,15 +97,15 @@ class PrincipalTest {
     @Test
     void deveEncontrarFuncionarioMaisVelhoECalcularIdade() {
         List<Funcionario> funcionarios = Principal.criarFuncionarios();
-        Principal.removerFuncionarioPorNome(funcionarios, "João");
+        service.removerPorNome(funcionarios, "João");
 
-        Funcionario maisVelho = Principal.funcionarioMaisVelho(funcionarios)
+        Funcionario maisVelho = service.encontrarMaisVelho(funcionarios)
                 .orElseThrow();
 
         assertEquals("Caio", maisVelho.getNome());
         assertEquals(
                 65,
-                Principal.calcularIdade(
+                service.calcularIdade(
                         maisVelho.getDataNascimento(),
                         LocalDate.of(2026, 9, 21)
                 )
@@ -111,9 +115,9 @@ class PrincipalTest {
     @Test
     void deveOrdenarFuncionariosPorNomeSemAlterarListaOriginal() {
         List<Funcionario> funcionarios = Principal.criarFuncionarios();
-        Principal.removerFuncionarioPorNome(funcionarios, "João");
+        service.removerPorNome(funcionarios, "João");
 
-        List<Funcionario> ordenados = Principal.ordenarPorNome(funcionarios);
+        List<Funcionario> ordenados = service.ordenarPorNome(funcionarios);
 
         assertIterableEquals(
                 List.of(
@@ -128,17 +132,17 @@ class PrincipalTest {
     @Test
     void deveSomarSalarios() {
         List<Funcionario> funcionarios = Principal.criarFuncionarios();
-        Principal.removerFuncionarioPorNome(funcionarios, "João");
+        service.removerPorNome(funcionarios, "João");
 
         assertEquals(
                 new BigDecimal("46278.93"),
-                Principal.somarSalarios(funcionarios)
+                service.somarSalarios(funcionarios)
         );
     }
 
     @Test
     void deveCalcularQuantidadeDeSalariosMinimos() {
-        BigDecimal quantidade = Principal.calcularSalariosMinimos(
+        BigDecimal quantidade = service.calcularSalariosMinimos(
                 new BigDecimal("2009.44"),
                 Principal.SALARIO_MINIMO
         );
