@@ -313,6 +313,44 @@ public static void main(String[] args)
 
 A saída da aplicação será exibida no terminal ou console da IDE.
 
+## Diferenciais do projeto
+
+Além de cumprir os requisitos funcionais propostos, o projeto foi pensado para demonstrar organização, segurança do domínio e facilidade de manutenção.
+
+### Separação de responsabilidades
+
+As regras de negócio foram concentradas em uma camada de serviço, evitando que a classe `Principal` acumule cálculos, filtros e transformações. Dessa forma:
+
+- `Principal` coordena o fluxo da aplicação e apresenta os resultados;
+- `FuncionarioService` concentra reajustes, agrupamentos, filtros, ordenações e cálculos;
+- `Pessoa` e `Funcionario` representam e protegem os dados do domínio.
+
+### Validações de domínio
+
+As entidades validam seus próprios dados para impedir estados inválidos, incluindo:
+
+- nomes e funções nulos ou vazios;
+- remoção de espaços desnecessários;
+- datas de nascimento futuras;
+- salários nulos ou negativos;
+- validação do salário tanto no cadastro quanto na atualização.
+
+### Valores monetários seguros
+
+Todos os salários e cálculos financeiros utilizam `BigDecimal`, com arredondamento explícito quando necessário. Isso evita as imprecisões que podem ocorrer com `float` e `double`.
+
+### Código testável
+
+As operações foram divididas em métodos pequenos e independentes, permitindo testar cada regra isoladamente. A suíte com JUnit 5 cobre os requisitos funcionais e as validações das entidades.
+
+### Automação e reprodutibilidade
+
+O projeto utiliza Maven para gerenciamento da compilação, execução e testes. Também foi configurado um workflow do GitHub Actions para validar automaticamente o projeto a cada atualização relevante.
+
+### Simplicidade intencional
+
+Não foram adicionados frameworks, banco de dados ou infraestrutura que não fossem necessários para o problema. A proposta é demonstrar domínio de Java Core, orientação a objetos, Collections, Streams, datas e cálculos monetários por meio de uma solução simples, legível e extensível.
+
 ## Decisões de implementação
 
 A solução foi mantida propositalmente simples e focada em **Java Core**.
